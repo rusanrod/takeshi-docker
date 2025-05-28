@@ -1,0 +1,32 @@
+services:
+  ros_noetic:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: ros_noetic
+    privileged: true
+    network_mode: "host"
+    runtime: nvidia
+    environment:
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - NVIDIA_VISIBLE_DEVICES=all
+      - PULSE_SERVER=unix:/tmp/pulse/native
+      - QT_X11_NO_MITSHM=1
+      - XDG_RUNTIME_DIR=/tmp/pulse
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /dev/dri:/dev/dri
+      - ~/.Xauthority:/home/takeshi/.Xauthority:rw
+      - ~/takeshi_home:/home/takeshi
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /run/user/1000/pulse:/tmp/pulse:ro #
+      - ~/.config/pulse:/home/takeshi/.config/pulse:ro #
+      - /run/user/1000/pulse:/tmp/pulse
+      - /etc/hosts:/etc/hosts
+    devices:
+      - /dev/snd  # acceso al audio
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
