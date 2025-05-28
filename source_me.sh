@@ -17,11 +17,14 @@ fi
 
 # Exportar variables ROS
 export DISABLE_ROS1_EOL_WARNINGS=1
-export ROS_MASTER_URI=http://$ROBOT_IP:11311
-export ROS_IP=$HOST_IP
-echo "ROS_MASTER_URI set to $ROS_MASTER_URI"
-echo "ROS_IP set to $ROS_IP"
-export PS1="\[\033[41;1;37m\]<hsrb>\[\033[0m\] \w\$ "
+alias hsrb_mode_et= 'export ROS_MASTER_URI=http://$ROBOT_IP:11311'
+alias hsrb_ip='export ROS_IP=$HOST_IP'
+alias PS1='export PS1="\[\033[41;1;37m\]<hsrb>\[\033[0m\] \w\$ "'
+alias echo_master='echo "ROS_MASTER_URI set to $ROS_MASTER_URI"'
+alisa echo_ip='echo "ROS_IP set to $ROS_IP"'
+alias et='hsrb_mode_et; PS1; hsrb_ip; echo_master; echo_ip'
+
+
 
 # Hacer source del catkin workspace
 if [ -f ~/catkin_extras/devel/setup.bash ]; then
