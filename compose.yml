@@ -14,19 +14,22 @@ services:
       - PULSE_SERVER=unix:/tmp/pulse/native
       - QT_X11_NO_MITSHM=1
       - XDG_RUNTIME_DIR=/tmp/pulse
+      - DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus 
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - /dev/dri:/dev/dri
       - ~/.Xauthority:/home/takeshi/.Xauthority:rw
-      - ~/takeshi_home:/home/takeshi
+      - ~/takeshi_home:/home/takeshi/takeshi_home
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - /run/user/1000/pulse:/tmp/pulse:ro #
       - ~/.config/pulse:/home/takeshi/.config/pulse:ro #
       - /run/user/1000/pulse:/tmp/pulse
       - /etc/hosts:/etc/hosts
+      - /run/user/1000/bus:/run/user/1000/bus
     devices:
       - /dev/snd  # acceso al audio
     stdin_open: true
     tty: true
-    restart: unless-stopped
+    restart: always
+    command: bash

@@ -5,9 +5,9 @@ Este contenedor Docker portátil está listo para usarse con el robot HSR y cuen
 - ROS Noetic completo
 - Soporte para CUDA y GUI
 - Terminales con **Terminator**
-- Alias útiles (`hsrb_mode`, `hsrb_ip`)
-- Configuración automática de entorno ROS con `.env`
+- Configuración automática de entorno ROS desde `.env`
 - Workspace precargado (`catkin_extras`)
+- Layout visual con 4 paneles configurados automáticamente
 
 ---
 
@@ -19,11 +19,8 @@ Asegúrate de tener esta estructura de carpetas en el **host**:
 
 ```
 .
-├── docker/
-│   ├── Dockerfile
-│   ├── .env             # Lo puedes editar
-│   └── source_me.sh     # Script para cargar entorno
-└── repos/
+|
+└── takeshi_home/        # En el home de tu PC
     └── catkin_extras/   # Tu workspace ROS personalizado
 ```
 
@@ -37,17 +34,17 @@ Este archivo contiene las IPs para conectarte al robot.
 
 ```env
 # .env
-ROBOT_IP=hsrc.local
-HOST_IP=192.168.1.100
+ROBOT_IP=192.168.11.220 <----Es la IP del Robot1
+HOST_IP=192.168.1.100<---- Es la IP de tu PC
 ```
 
-> Puedes editar este archivo desde dentro o fuera del contenedor. Se guarda y persiste.
+> Modifica este archivo antes de compilar el contenedor.
 
 ---
 
 ### 3. 🛠 Build del contenedor
 
-Desde la carpeta donde esté tu `docker-compose.yml`:
+Desde la carpeta donde esté el `docker-compose.yml`:
 
 ```bash
 docker compose build
@@ -58,7 +55,7 @@ docker compose build
 ### 4. 🧩 Corre el contenedor
 
 ```bash
-docker compose up
+docker compose up -d
 ```
 
 > Se abrirá una terminal gráfica con **Terminator**.
@@ -67,10 +64,10 @@ docker compose up
 
 ### 5. 🧪 Carga el entorno ROS
 
-Una vez dentro del contenedor, ejecuta:
+Una vez dentro del contenedor, se ejecuta automaticamente:
 
 ```bash
-source ~/source_me.sh
+source /ros_entrypoint.sh
 ```
 
 Esto hará:

@@ -1,0 +1,26 @@
+services:
+  ros_noetic:
+    image: ros_noetic_cuda12.1
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: ros_noetic
+    privileged: true
+    network_mode: "host"
+    environment:
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ~/repos:/home/rusanrod/repos
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      #- ~/.bashrc:/home/rusanrod/.bashrc  # Persistir el archivo .bashrc
+      - /etc/hosts:/etc/hosts            # Persistir el archivo /etc/hosts
+    restart: always
+    stdin_open: true
+    tty: true
+    runtime: nvidia
+    devices:
+      - "/dev/dri:/dev/dri" 

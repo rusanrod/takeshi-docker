@@ -1,58 +1,56 @@
-FROM nvidia/cuda:12.1.1-runtime-ubuntu20.04
+FROM nvidia/cuda:12.1.1-devel-ubuntu20.04
 
+# Configurar environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
     ROS_DISTRO=noetic \
     ROS_VERSION=1 \
     NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=all \
-    LANG=C.UTF-8 LC_ALL=C.UTF-8
+    NVIDIA_DRIVER_CAPABILITIES=all
 
-# -------------------------------
-# Dependencias base
-# -------------------------------
-RUN rm -f /etc/apt/sources.list.d/cuda*.list /etc/apt/sources.list.d/nvidia-ml.list
-
+# Instalar dependencias principales
 RUN apt-get update && apt-get install -y \
-    wget curl sudo nano git python3-pip python3-dev \
-    pulseaudio portaudio19-dev libpulse-dev \
-    x11-xserver-utils libx11-dev dbus-x11 \
-    libgl1-mesa-glx libgl1-mesa-dri \
+    wget nano sudo python3-pip \
+    x11-xserver-utils \
     iproute2 iputils-ping net-tools \
-    lsb-release gnupg2 tmux \
+    libgl1-mesa-glx \
+    libx11-dev \
+    libgl1-mesa-dri \
+    lsb-release gnupg2 curl \
     && rm -rf /var/lib/apt/lists/*
 
-# -------------------------------
-# Usuario
-# -------------------------------
+# Agregar usuario con el mismo UID y GID que en el host
 ARG USERNAME=takeshi
 ARG USER_UID=1000
 ARG USER_GID=1000
-
 RUN groupadd -g $USER_GID $USERNAME && \
     useradd -m -u $USER_UID -g $USER_GID -s /bin/bash $USERNAME && \
     echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME
 
-# -------------------------------
-# ROS Noetic
-# -------------------------------
+# Instalar ROS Noetic Desktop Full
 RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+#RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
 RUN apt-get update && apt-get install -y ros-noetic-desktop-full
-
 RUN echo "source /opt/ros/noetic/setup.bash" >> /home/$USERNAME/.bashrc
 
-RUN apt-get install -y \
-    python3-rosdep \
+RUN apt install -y python3-rosdep \
     python3-rosinstall \
     python3-rosinstall-generator \
-    python3-wstool \
-    build-essential
-    
-RUN rosdep init && rosdep update
+    python3-wstool build-essential
 
-# -------------------------------
-# Paquetes HSR
-# -------------------------------
+# Inicializar rosdep
+RUN rosdep init && rosdep update
+RUN rm -rf /var/lib/apt/lists/*
+
+# Python packages
+RUN pip install --no-cache-dir \
+    rosnumpy stitching opencv-python numpy==1.23.5 rospkg setuptools \
+    pyaudio scipy vosk sounddevice spacy==3.7.4 jinja2==3.0.3 \
+    torch torchvision torchaudio transformers==4.40.0
+
+
+# Instalar paquetes específicos para HSR (ajustar según necesidades)
+# Install HSR ROS packages
 RUN sh -c 'echo "deb [arch=amd64] https://hsr-user:jD3k4G2e@packages.hsr.io/ros/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/tmc.list'
 RUN sh -c 'echo "deb [arch=amd64] https://hsr-user:jD3k4G2e@packages.hsr.io/tmc/ubuntu `lsb_release -cs` multiverse main" >> /etc/apt/sources.list.d/tmc.list'
 RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
@@ -66,48 +64,21 @@ RUN apt-get update
 RUN apt-get install -y --no-install-recommends ros-noetic-tmc-desktop-full \
     && rm -rf /var/lib/apt/lists/*
 
-# -------------------------------
-# Python Packages
-# -------------------------------
-RUN pip3 install --no-cache-dir \
-    rosnumpy opencv-python numpy==1.23.5 rospkg setuptools \
-    pyaudio scipy vosk sounddevice spacy==3.7.4 jinja2==3.0.3 \
-    torch torchvision torchaudio transformers==4.40.0
-
-# -------------------------------
-# Alias y entorno
-# -------------------------------
-# RUN echo 'alias hsrc_mode="export ROS_MASTER_URI=http://hsrc.local:11311; export PS1=\"\[\033[41;1;37m\]<hsrb>\[\033[0m\]\w$ \""' >> /home/$USERNAME/.bashrc && \
-#     echo "alias hsrc_ip='export ROS_IP=192.168.11.220'" >> /home/$USERNAME/.bashrc && \
-#     echo "alias et='hsrc_mode;hsrc_ip'" >> /home/$USERNAME/.bashrc
-
-# -------------------------------
 # Instalar paquetes adicionales de ROS
-# -------------------------------
 RUN apt-get update && apt-get install -y \
     ros-noetic-graph-msgs \
     ros-noetic-random-numbers \
     ros-noetic-tf2-sensor-msgs \
-    ros-noetic-moveit terminator\
+    ros-noetic-moveit \
     && rm -rf /var/lib/apt/lists/*
 
-# -------------------------------
-# Permisos finales
-# -------------------------------
-COPY .env /home/$USERNAME/.env
-COPY ros_entrypoint.sh /ros_entrypoint.sh
-COPY terminator.conf /home/$USERNAME/.config/terminator/config
+RUN echo 'alias hsrc_mode="export ROS_MASTER_URI=http://hsrc.local:11311; export PS1=\"\[\033[41;1;37m\]<hsrb>\[\033[0m\]\w$ \""' >> /home/$USERNAME/.bashrc
+RUN echo "alias hsrc_ip='export ROS_IP=192.168.11.220'" >> /home/$USERNAME/.bashrc
+RUN echo "alias et=hsrc_mode;hsrc_ip" >> /home/$USERNAME/.bashrc
 
-# Dar permisos
-RUN chmod +x /ros_entrypoint.sh
-RUN chown $USERNAME:$USERNAME /home/$USERNAME/.env /ros_entrypoint.sh
-RUN chown -R $USERNAME:$USERNAME /home/$USERNAME
-
-RUN echo 'export PS1="\[\033[41;1;37m\]<hsrb>\[\033[0m\] \w\$ "' >> /home/$USERNAME/.bashrc
-
+# Establecer usuario por defecto
 USER $USERNAME
-WORKDIR /home/$USERNAME/takeshi_home
+WORKDIR /home/$USERNAME
 
-ENTRYPOINT ["/ros_entrypoint.sh"]
-CMD ["terminator", "--layout=default"]
+CMD ["/bin/bash"]
 
