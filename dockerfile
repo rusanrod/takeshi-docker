@@ -95,19 +95,19 @@ RUN apt-get update && apt-get install -y \
 # Permisos finales
 # -------------------------------
 COPY .env /home/$USERNAME/.env
-COPY ros_entrypoint.sh /ros_entrypoint.sh
+COPY ros_entrypoint.sh /home/$USERNAME/ros_entrypoint.sh
 COPY terminator.conf /home/$USERNAME/.config/terminator/config
 
 # Dar permisos
-RUN chmod +x /ros_entrypoint.sh
-RUN chown $USERNAME:$USERNAME /home/$USERNAME/.env /ros_entrypoint.sh
+RUN chmod +x /home/$USERNAME/ros_entrypoint.sh
+RUN chown $USERNAME:$USERNAME /home/$USERNAME/.env /home/$USERNAME/ros_entrypoint.sh
 RUN chown -R $USERNAME:$USERNAME /home/$USERNAME
 
-RUN echo 'export PS1="\[\033[41;1;37m\]<hsrb>\[\033[0m\] \w\$ "' >> /home/$USERNAME/.bashrc
+RUN echo '[ -f "$HOME/ros_entrypoint.sh" ] && source "$HOME/ros_entrypoint.sh"' >> /home/$USERNAME/.bashrc
 
 USER $USERNAME
 WORKDIR /home/$USERNAME/takeshi_home
 
-ENTRYPOINT ["/ros_entrypoint.sh"]
-CMD ["terminator", "--layout=default"]
+# ENTRYPOINT ["/home/takeshi/ros_entrypoint.sh"]
+# CMD ["terminator", "--layout=default"]
 
