@@ -59,6 +59,7 @@ docker compose up -d
 ```
 
 > Se abrirá una terminal gráfica con **Terminator**.
+> La bandera -d es para correr el proceso en segundo plano, sin la bandera abre automaticamente la terminal **Terminator**.
 
 ---
 
